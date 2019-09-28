@@ -121,7 +121,7 @@ def minibatch_parse(sentences, model, batch_size):
             partial_parse.parse_step(transition)
             if len(unfinished_parses[idx].stack) <= 1 and not len(unfinished_parses[idx].buffer):
                 unfinished_parses.pop(
-                    idx)  # Didn't use del or remove because that would have affected the original partial_parses list.
+                    idx)  # Didn't use del because that would have affected the original partial_parses list.
             else:
                 idx += 1
     dependencies = [partial_parses[i].dependencies for i in range(len(partial_parses))]
