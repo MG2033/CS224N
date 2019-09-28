@@ -54,12 +54,12 @@ class PartialParse(object):
         if transition == "S":
             self.stack.append(self.buffer.pop(0))
         elif transition == "LA":
-            dependent = self.stack.pop(len(self.stack) - 2)
-            head = self.stack[len(self.stack) - 1]
+            dependent = self.stack.pop(-2)
+            head = self.stack[-1]
             self.dependencies.append((head, dependent))
         elif transition == "RA":
-            dependent = self.stack.pop(len(self.stack) - 1)
-            head = self.stack[len(self.stack) - 1]
+            dependent = self.stack.pop(-1)
+            head = self.stack[-1]
             self.dependencies.append((head, dependent))
 
         ### END YOUR CODE
@@ -111,7 +111,20 @@ def minibatch_parse(sentences, model, batch_size):
     ###             contains references to the same objects. Thus, you should NOT use the `del` operator
     ###             to remove objects from the `unfinished_parses` list. This will free the underlying memory that
     ###             is being accessed by `partial_parses` and may cause your code to crash.
-
+    partial_parses = [PartialParse(sentence) for sentence in sentences]
+    unfinished_parses = partial_parses[:]
+    while len(unfinished_parses):
+        minibatch = unfinished_parses[:batch_size]
+        transitions = model.predict(minibatch)
+        idx = 0
+        for partial_parse, transition in zip(minibatch, transitions):
+            partial_parse.parse_step(transition)
+            if len(unfinished_parses[idx].stack) <= 1 and not len(unfinished_parses[idx].buffer):
+                unfinished_parses.pop(
+                    idx)  # Didn't use del or remove because that would have affected the original partial_parses list.
+            else:
+                idx += 1
+    dependencies = [partial_parses[i].dependencies for i in range(len(partial_parses))]
     ### END YOUR CODE
 
     return dependencies
